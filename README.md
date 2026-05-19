@@ -12,7 +12,7 @@ Data-driven testing keeps test logic in code and test cases in plain text files.
 include(FetchContent)
 FetchContent_Declare(
   datadriven
-  GIT_REPOSITORY https://github.com/alexandr-croitor/datadriven-cpp.git
+  GIT_REPOSITORY https://github.com/yorunikakeru4/datadriven-cpp.git
   GIT_TAG        main
 )
 FetchContent_MakeAvailable(datadriven)
@@ -118,11 +118,11 @@ cmd flag key=value multi=(a, b, c)
 ----
 ```
 
-| Syntax | `CmdArg::key` | `CmdArg::vals` |
-|--------|--------------|----------------|
-| `flag` | `"flag"` | `{}` |
-| `key=value` | `"key"` | `{"value"}` |
-| `key=(a, b, c)` | `"key"` | `{"a", "b", "c"}` |
+| Syntax          | `CmdArg::key` | `CmdArg::vals`    |
+| --------------- | ------------- | ----------------- |
+| `flag`          | `"flag"`      | `{}`              |
+| `key=value`     | `"key"`       | `{"value"}`       |
+| `key=(a, b, c)` | `"key"`       | `{"a", "b", "c"}` |
 
 ### Multiline output
 
