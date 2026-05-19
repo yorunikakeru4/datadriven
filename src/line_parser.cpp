@@ -92,16 +92,20 @@ std::pair<std::string, std::vector<CmdArg>> ParseLine(std::string_view input) {
       ParseError(original_owned, line);
     }
 
-    if (!line.empty() && line.front() == '=') {
-      line.remove_prefix(1);
-      if (line.empty() ||
-          std::isspace(static_cast<unsigned char>(line.front())) != 0) {
-        arg.vals.push_back("");
-      } else if (line.front() != '(') {
-        arg.vals.push_back(ConsumeUntil(line, " \t"));
-      } else {
-        ConsumeListValue(original_owned, line, arg);
-      }
+    if (line.empty() || line.front() != '=') {
+      args.push_back(std::move(arg));
+      TrimLineStart(line);
+      continue;
+    }
+
+    line.remove_prefix(1);
+    if (line.empty() ||
+        std::isspace(static_cast<unsigned char>(line.front())) != 0) {
+      arg.vals.push_back("");
+    } else if (line.front() != '(') {
+      arg.vals.push_back(ConsumeUntil(line, " \t"));
+    } else {
+      ConsumeListValue(original_owned, line, arg);
     }
 
     args.push_back(std::move(arg));

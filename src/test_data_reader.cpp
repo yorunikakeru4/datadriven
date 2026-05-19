@@ -16,10 +16,12 @@ bool IsSeparator(std::string_view line) { return line == kSeparator; }
 } // namespace
 
 bool LineScanner::Scan() {
-  if (!std::getline(in_, text_))
+  if (!std::getline(in_, text_)) {
     return false;
-  if (!text_.empty() && text_.back() == '\r')
+  }
+  if (!text_.empty() && text_.back() == '\r') {
     text_.pop_back();
+  }
   ++line_;
   return true;
 }
@@ -29,8 +31,9 @@ TestDataReader::TestDataReader(std::string source_name, std::istream &in,
     : source_name_(std::move(source_name)), scanner_(in), record_(record) {}
 
 void TestDataReader::Emit(std::string_view s) {
-  if (record_)
+  if (record_) {
     rewrite_ << s << '\n';
+  }
 }
 
 std::optional<TestData> TestDataReader::Next() {
@@ -41,8 +44,9 @@ std::optional<TestData> TestDataReader::Next() {
     data.pos = source_name_ + ":" + std::to_string(scanner_.Line());
 
     line = TrimSpace(line);
-    if (line.empty() || StartsWith(line, "#"))
+    if (line.empty() || StartsWith(line, "#")) {
       continue;
+    }
 
     while (EndsWith(line, "\\") && scanner_.Scan()) {
       std::string next = scanner_.Text();
@@ -53,13 +57,15 @@ std::optional<TestData> TestDataReader::Next() {
     }
 
     auto [cmd, args] = ParseLine(line);
-    if (cmd.empty())
+    if (cmd.empty()) {
       continue;
+    }
     data.cmd = std::move(cmd);
     data.cmd_args = std::move(args);
 
-    if (data.cmd == "subtest")
+    if (data.cmd == "subtest") {
       return data;
+    }
 
     std::ostringstream input;
     bool separator = false;
@@ -73,8 +79,9 @@ std::optional<TestData> TestDataReader::Next() {
       input << line << '\n';
     }
     data.input = TrimSpace(input.str());
-    if (separator)
+    if (separator) {
       ReadExpected(data);
+    }
     data.rewrite = record_;
     return data;
   }
@@ -91,8 +98,9 @@ void TestDataReader::ReadExpected(TestData &data) {
 
   if (scanner_.Scan()) {
     line = scanner_.Text();
-    if (IsSeparator(line))
+    if (IsSeparator(line)) {
       allow_blank_lines = true;
+    }
   }
 
   ParseBlock(allow_blank_lines, line, out);
@@ -145,13 +153,15 @@ void TestDataReader::ParseBlockAllowingBlankLines(std::string &line,
 void TestDataReader::ParseBlockUntilBlankLine(std::string &line,
                                               std::ostream &out) {
   while (true) {
-    if (TrimSpace(line).empty())
+    if (TrimSpace(line).empty()) {
       return;
+    }
 
     out << line << '\n';
 
-    if (!scanner_.Scan())
+    if (!scanner_.Scan()) {
       return;
+    }
 
     line = scanner_.Text();
   }

@@ -15,12 +15,15 @@ struct WalkEntry {
 };
 
 bool IsTempFile(std::string_view name) {
-  if (name.empty())
+  if (name.empty()) {
     return false;
-  if (name.front() == '.')
+  }
+  if (name.front() == '.') {
     return true;
-  if (name.back() == '~')
+  }
+  if (name.back() == '~') {
     return true;
+  }
   return name.size() >= 2 && name.front() == '#' && name.back() == '#';
 }
 
@@ -41,8 +44,9 @@ void Walk(std::string_view path_view,
   std::vector<WalkEntry> entries;
   for (const auto &entry : std::filesystem::directory_iterator(path)) {
     auto name = entry.path().filename().string();
-    if (!IsTempFile(name))
+    if (!IsTempFile(name)) {
       entries.push_back({entry, std::move(name)});
+    }
   }
   std::sort(entries.begin(), entries.end(),
             [](const auto &a, const auto &b) { return a.name < b.name; });

@@ -11,15 +11,18 @@
 namespace datadriven {
 
 std::string CmdArg::ToString() const {
-  if (vals.empty())
+  if (vals.empty()) {
     return key;
-  if (vals.size() == 1)
+  }
+  if (vals.size() == 1) {
     return key + "=" + vals[0];
+  }
   std::ostringstream out;
   out << key << "=(";
   for (std::size_t i = 0; i < vals.size(); ++i) {
-    if (i != 0)
+    if (i != 0) {
       out << ", ";
+    }
     out << vals[i];
   }
   out << ")";
@@ -60,21 +63,24 @@ std::pair<std::string, std::string> CmdArg::TwoVals() const {
 std::string TestData::FullCmd() const {
   std::ostringstream out;
   out << cmd;
-  for (const auto &arg : cmd_args)
+  for (const auto &arg : cmd_args) {
     out << " " << arg.ToString();
+  }
   return out.str();
 }
 
 std::string TestData::ToString() const {
-  if (input.empty())
+  if (input.empty()) {
     return FullCmd() + "\n";
+  }
   return FullCmd() + "\n" + input + "\n";
 }
 
 const CmdArg *TestData::Arg(std::string_view key) const {
   for (const auto &arg : cmd_args) {
-    if (arg.key == key)
+    if (arg.key == key) {
       return &arg;
+    }
   }
   return nullptr;
 }
@@ -97,8 +103,9 @@ std::string UnifiedFailure(const TestData &d, std::string_view actual) {
 void EmitLines(internal::TestDataReader &reader, std::string_view text) {
   std::stringstream lines{std::string(text)};
   std::string line;
-  while (std::getline(lines, line))
+  while (std::getline(lines, line)) {
     reader.Emit(line);
+  }
 }
 
 void EmitActual(internal::TestDataReader &reader, std::string_view actual) {
@@ -122,8 +129,9 @@ std::string RunTestInternal(std::string_view source_name, std::istream &input,
   std::vector<std::string> subtests;
   while (auto td = reader.Next()) {
     if (td->cmd == "subtest") {
-      if (td->cmd_args.empty())
+      if (td->cmd_args.empty()) {
         throw std::runtime_error(td->pos + ": invalid syntax for subtest");
+      }
       const std::string name = td->cmd_args[0].key;
       if (name == "end") {
         if (subtests.empty()) {
@@ -150,17 +158,20 @@ std::string RunTestInternal(std::string_view source_name, std::istream &input,
     }
 
     std::string actual = handler(*td);
-    if (!actual.empty() && actual.back() != '\n')
+    if (!actual.empty() && actual.back() != '\n') {
       actual.push_back('\n');
+    }
     if (options.rewrite) {
       EmitActual(reader, actual);
       continue;
     }
-    if (td->expected != actual)
+    if (td->expected != actual) {
       throw std::runtime_error(UnifiedFailure(*td, actual));
+    }
   }
-  if (!subtests.empty())
+  if (!subtests.empty()) {
     throw std::runtime_error("EOF encountered without subtest end directive");
+  }
 
   std::string rewrite = reader.RewriteOutput();
   if (rewrite.size() > 2 && rewrite[rewrite.size() - 1] == '\n' &&
@@ -183,9 +194,10 @@ void WriteFileAtomically(std::string_view path_text,
   const std::filesystem::path path{std::string(path_text)};
   std::error_code ec;
   const auto original_status = std::filesystem::status(path, ec);
-  if (ec)
+  if (ec) {
     throw std::runtime_error("failed to stat " + path.string() + ": " +
                              ec.message());
+  }
 
   std::filesystem::path temp;
   bool found_temp = false;
@@ -195,9 +207,10 @@ void WriteFileAtomically(std::string_view path_text,
       found_temp = true;
       break;
     }
-    if (ec)
+    if (ec) {
       throw std::runtime_error("failed to inspect " + temp.string() + ": " +
                                ec.message());
+    }
   }
   if (!found_temp) {
     throw std::runtime_error("failed to choose temporary rewrite path for " +
@@ -250,8 +263,9 @@ void RunTest(std::string_view path, Handler handler, Options options) {
         " is a directory, not a file; consider using datadriven::Walk");
   }
   std::ifstream file{std::string(path)};
-  if (!file)
+  if (!file) {
     throw std::runtime_error("failed to open " + std::string(path));
+  }
   std::string rewrite =
       RunTestInternal(path, file, std::move(handler), options);
   if (options.rewrite) {
