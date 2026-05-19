@@ -98,9 +98,10 @@ struct TestData {
   template <class T> void ScanArg(std::string_view key, T &out) const;
 
   // RetryFor repeatedly calls fn until its trimmed output matches expected for
-  // a stable period, or until timeout-derived attempts are exhausted. In
-  // rewrite mode it sleeps for timeout/10, calls fn once, and returns that
-  // output.
+  // a stable period, or until timeout-derived attempts are exhausted. It
+  // matches CockroachDB's retry defaults (100 attempts, 3 stable matches) and
+  // uses nanosecond granularity to avoid truncating small timeouts. In rewrite
+  // mode it sleeps for timeout/10, calls fn once, and returns that output.
   template <class Fn>
   std::string RetryFor(std::chrono::milliseconds timeout, Fn &&fn) const;
   // Retry calls RetryFor with the default one-second timeout.
@@ -230,12 +231,18 @@ template <class T> void TestData::ScanArg(std::string_view key, T &out) const {
 template <class Fn>
 std::string TestData::RetryFor(std::chrono::milliseconds timeout,
                                Fn &&fn) const {
+  const auto timeout_ns =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(timeout);
   if (rewrite) {
-    std::this_thread::sleep_for(timeout / 10);
+    std::this_thread::sleep_for(timeout_ns / 10);
     return std::invoke(std::forward<Fn>(fn));
   }
+  // 100 attempts yields ~1% sampling of the timeout and bounds total retries.
   constexpr int attempts = 100;
+  // Require a few consecutive matches to smooth over transient output changes.
   constexpr int stable = 3;
+  const auto sleep_interval =
+      timeout_ns / attempts + std::chrono::nanoseconds(1);
   int ok = 0;
   const auto expected_trimmed = internal::RetryTrimSpace(expected);
   for (int i = 0;; ++i) {
@@ -245,16 +252,14 @@ std::string TestData::RetryFor(std::chrono::milliseconds timeout,
       if (ok == stable || i == attempts) {
         return s;
       }
-      std::this_thread::sleep_for(timeout / attempts +
-                                  std::chrono::milliseconds(1));
+      std::this_thread::sleep_for(sleep_interval);
       continue;
     }
     ok = 0;
     if (i == attempts) {
       return s;
     }
-    std::this_thread::sleep_for(timeout / attempts +
-                                std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(sleep_interval);
   }
 }
 
