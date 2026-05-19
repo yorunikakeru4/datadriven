@@ -1,0 +1,14 @@
+noop
+hello
+----
+old
+
+duplicate
+world
+----
+old
+
+duplicate-with-blank
+line
+----
+old

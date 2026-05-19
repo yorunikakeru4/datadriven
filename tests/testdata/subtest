@@ -1,0 +1,15 @@
+subtest outer
+
+hello world
+----
+world was said
+
+subtest outer/inner
+
+hello cpp
+----
+cpp was said
+
+subtest end outer/inner
+
+subtest end outer

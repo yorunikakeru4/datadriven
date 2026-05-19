@@ -1,0 +1,11 @@
+empty
+----
+empty
+
+with-input arg=1
+hello
+world
+----
+with-input arg=1
+hello
+world

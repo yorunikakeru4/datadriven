@@ -1,0 +1,13 @@
+first
+----
+cmd: first
+0 arguments
+
+second arg flag one=1 many=(a, b, c)
+----
+cmd: second
+4 arguments
+key="arg" vals={}
+key="flag" vals={}
+key="one" vals={"1"}
+key="many" vals={"a", "b", "c"}
