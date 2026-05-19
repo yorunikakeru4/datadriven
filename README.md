@@ -38,7 +38,35 @@ hello
 HELLO
 ```
 
-**4. Write the test:**
+**4. Write the test** (`tests/mytest.cpp`):
+
+No test framework required — `RunTest` throws `std::runtime_error` with file/line context on any mismatch.
+
+```cpp
+#include <datadriven/datadriven.hpp>
+
+int main() {
+    datadriven::RunTest("tests/testdata/mytest", [](const datadriven::TestData& d) {
+        if (d.cmd == "echo") return d.input;
+        if (d.cmd == "upper") {
+            std::string s = d.input;
+            std::ranges::transform(s, s.begin(), ::toupper);
+            return s;
+        }
+        throw std::runtime_error("unknown cmd: " + d.cmd);
+    });
+}
+```
+
+Add the executable to `CMakeLists.txt`:
+
+```cmake
+add_executable(mytest tests/mytest.cpp)
+target_link_libraries(mytest PRIVATE datadriven)
+```
+
+<details>
+<summary>With Catch2</summary>
 
 ```cpp
 #include <catch2/catch_test_macros.hpp>
@@ -57,12 +85,14 @@ TEST_CASE("mytest") {
 }
 ```
 
+</details>
+
 **5. Run:**
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
-ctest --test-dir build --output-on-failure
+./build/mytest
 ```
 
 On failure you get the file path and line number of the mismatched directive. To regenerate expected output after logic changes, run with `DATADRIVEN_REWRITE=1`.
