@@ -6,8 +6,8 @@
 #include <system_error>
 #include <unistd.h>
 
-#include <datadriven/internal/string_util.hpp>
 #include "test_data_reader.hpp"
+#include <datadriven/internal/string_util.hpp>
 
 namespace datadriven {
 

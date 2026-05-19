@@ -1,6 +1,6 @@
-#include <datadriven/internal/string_util.hpp>
 #include <cctype>
 #include <datadriven/datadriven.hpp>
+#include <datadriven/internal/string_util.hpp>
 #include <stdexcept>
 #include <string>
 
