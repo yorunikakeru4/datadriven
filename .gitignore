@@ -1,4 +1,7 @@
 docs/
 build/
 .copilot/
+.claude/
 .cache
+build-ci-clang/
+build-ci-gcc/
