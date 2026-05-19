@@ -51,6 +51,14 @@ TEST_CASE("ParseLine parses list args and nested parens") {
   REQUIRE(args[2].vals == std::vector<std::string>{""});
 }
 
+TEST_CASE("ParseLine trims list values") {
+  auto [cmd, args] = datadriven::ParseLine("cmd items=(a , b)");
+  REQUIRE(cmd == "cmd");
+  REQUIRE(args.size() == 1);
+  REQUIRE(args[0].key == "items");
+  REQUIRE(args[0].vals == std::vector<std::string>{"a", "b"});
+}
+
 TEST_CASE("ParseLine reports malformed input with column") {
   try {
     (void)datadriven::ParseLine("xx =");

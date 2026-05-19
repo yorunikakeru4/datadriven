@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include <datadriven/internal/trim_space.hpp>
+
 namespace datadriven {
 
 // Options controls runner behavior for a single RunTest or
@@ -98,10 +100,9 @@ struct TestData {
   template <class T> void ScanArg(std::string_view key, T &out) const;
 
   // RetryFor repeatedly calls fn until its trimmed output matches expected for
-  // a stable period, or until timeout-derived attempts are exhausted. It
-  // matches CockroachDB's retry defaults (100 attempts, 3 stable matches) and
-  // uses nanosecond granularity to avoid truncating small timeouts. In rewrite
-  // mode it sleeps for timeout/10, calls fn once, and returns that output.
+  // 3 consecutive stable calls, or until timeout elapses. Sleep interval is
+  // ~1% of timeout (floor 1ms). In rewrite mode it sleeps for timeout/10,
+  // calls fn once, and returns that output.
   template <class Fn>
   std::string RetryFor(std::chrono::milliseconds timeout, Fn &&fn) const;
   // Retry calls RetryFor with the default one-second timeout.
@@ -177,21 +178,6 @@ template <class T> T ParseScalar(const std::string &s) {
   }
 }
 
-inline std::string RetryTrimSpace(std::string_view s) {
-  auto begin = s.begin();
-  auto end = s.end();
-  while (begin != end && (*begin == ' ' || *begin == '\t' || *begin == '\n' ||
-                          *begin == '\r' || *begin == '\f' || *begin == '\v')) {
-    ++begin;
-  }
-  while (begin != end &&
-         (*(end - 1) == ' ' || *(end - 1) == '\t' || *(end - 1) == '\n' ||
-          *(end - 1) == '\r' || *(end - 1) == '\f' || *(end - 1) == '\v')) {
-    --end;
-  }
-  return std::string(begin, end);
-}
-
 } // namespace internal
 
 template <class T> T CmdArg::Scan(std::size_t i) const {
@@ -231,33 +217,30 @@ template <class T> void TestData::ScanArg(std::string_view key, T &out) const {
 template <class Fn>
 std::string TestData::RetryFor(std::chrono::milliseconds timeout,
                                Fn &&fn) const {
-  const auto timeout_ns =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(timeout);
   if (rewrite) {
-    std::this_thread::sleep_for(timeout_ns / 10);
+    std::this_thread::sleep_for(timeout / 10);
     return std::invoke(std::forward<Fn>(fn));
   }
-  // 100 attempts yields ~1% sampling of the timeout and bounds total retries.
-  constexpr int attempts = 100;
   // Require a few consecutive matches to smooth over transient output changes.
   constexpr int stable = 3;
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  // Sleep ~1% of the timeout per attempt; floor at 1ms to avoid busy-waiting.
   const auto sleep_interval =
-      timeout_ns / attempts + std::chrono::nanoseconds(1);
+      std::max(timeout / 100, std::chrono::milliseconds(1));
   int ok = 0;
-  const auto expected_trimmed = internal::RetryTrimSpace(expected);
-  for (int i = 0;; ++i) {
-    std::string s = std::invoke(fn);
-    if (internal::RetryTrimSpace(s) == expected_trimmed) {
-      ++ok;
-      if (ok == stable || i == attempts) {
-        return s;
+  const auto expected_trimmed = internal::TrimSpace(expected);
+  std::string last;
+  for (;;) {
+    last = std::invoke(fn);
+    if (internal::TrimSpace(last) == expected_trimmed) {
+      if (++ok >= stable) {
+        return last;
       }
-      std::this_thread::sleep_for(sleep_interval);
-      continue;
+    } else {
+      ok = 0;
     }
-    ok = 0;
-    if (i == attempts) {
-      return s;
+    if (std::chrono::steady_clock::now() >= deadline) {
+      return last;
     }
     std::this_thread::sleep_for(sleep_interval);
   }

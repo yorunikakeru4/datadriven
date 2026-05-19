@@ -1,20 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <datadriven/datadriven.hpp>
 #include <filesystem>
-#include <fstream>
 #include <vector>
 
-namespace {
-
-void WriteFile(const std::filesystem::path &path, std::string_view data) {
-  std::ofstream out(path, std::ios::trunc);
-  if (!out) {
-    throw std::runtime_error("failed to open for writing: " + path.string());
-  }
-  out << data;
-}
-
-} // namespace
+#include "test_paths.hpp"
 
 TEST_CASE("Walk visits files in deterministic order and strips extension for "
           "examples") {
@@ -22,8 +11,8 @@ TEST_CASE("Walk visits files in deterministic order and strips extension for "
       std::filesystem::temp_directory_path() / "datadriven-cpp-walk";
   std::filesystem::remove_all(dir);
   std::filesystem::create_directories(dir);
-  WriteFile(dir / "noext", "name\n----\ntest name: noext\n");
-  WriteFile(dir / "ext.test", "name\n----\ntest name: ext\n");
+  datadriven::test::WriteFile(dir / "noext", "name\n----\ntest name: noext\n");
+  datadriven::test::WriteFile(dir / "ext.test", "name\n----\ntest name: ext\n");
 
   std::vector<std::string> paths;
   datadriven::Walk(dir.string(), [&](std::string_view path) {

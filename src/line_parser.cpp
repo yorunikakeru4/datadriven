@@ -22,8 +22,7 @@ void TrimLineStart(std::string_view &line) {
   }
 }
 
-[[noreturn]] void ParseError(std::string_view original,
-                             std::string_view rest) {
+[[noreturn]] void ParseError(std::string_view original, std::string_view rest) {
   const auto column = original.size() - rest.size() + 1;
   throw std::runtime_error("cannot parse directive at column " +
                            std::to_string(column) + ": " +
@@ -52,7 +51,7 @@ void ConsumeListValue(const std::string &original, std::string_view &line,
     if (ch == ',' && nest == 1) {
       const auto value_size =
           static_cast<std::size_t>((line.data() - value.data()) - 1);
-      arg.vals.emplace_back(value.substr(0, value_size));
+      arg.vals.emplace_back(internal::TrimSpace(value.substr(0, value_size)));
       TrimLineStart(line);
       value = line;
       continue;
@@ -67,7 +66,7 @@ void ConsumeListValue(const std::string &original, std::string_view &line,
   }
   const auto value_size =
       static_cast<std::size_t>((line.data() - value.data()) - 1);
-  arg.vals.emplace_back(value.substr(0, value_size));
+  arg.vals.emplace_back(internal::TrimSpace(value.substr(0, value_size)));
 }
 
 } // namespace

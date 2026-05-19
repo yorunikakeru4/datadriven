@@ -148,11 +148,6 @@ void TestDataReader::ParseBlockAllowingBlankLines(std::string &line,
       continue;
     }
 
-    if (scanner_.Scan() && !scanner_.Text().empty()) {
-      throw std::runtime_error(
-          "non-blank line after end of double ---- separator section");
-    }
-
     return;
   }
 

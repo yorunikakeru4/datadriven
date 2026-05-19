@@ -15,14 +15,6 @@ std::string ReadFile(const std::filesystem::path &path) {
   return out.str();
 }
 
-void WriteFile(const std::filesystem::path &path, std::string_view data) {
-  std::ofstream out(path, std::ios::trunc);
-  if (!out) {
-    throw std::runtime_error("failed to open for writing: " + path.string());
-  }
-  out << data;
-}
-
 std::string RewriteHandler(const datadriven::TestData &d) {
   if (d.cmd == "noop")
     return d.input;
@@ -46,7 +38,7 @@ TEST_CASE("RunTest rewrite matches golden files") {
     const auto expected =
         datadriven::test::TestDataPath("rewrite") / (name + "-after");
     const auto work = dir / name;
-    WriteFile(work, ReadFile(source));
+    datadriven::test::WriteFile(work, ReadFile(source));
     datadriven::RunTest(work.string(), RewriteHandler,
                         datadriven::Options{.rewrite = true});
     REQUIRE(ReadFile(work) == ReadFile(expected));
@@ -56,8 +48,7 @@ TEST_CASE("RunTest rewrite matches golden files") {
 TEST_CASE("RunTestFromString rejects rewrite mode") {
   try {
     datadriven::RunTestFromString(
-        "cmd\n----\nold\n",
-        [](const datadriven::TestData &) { return "new"; },
+        "cmd\n----\nold\n", [](const datadriven::TestData &) { return "new"; },
         datadriven::Options{.rewrite = true});
     FAIL("rewrite mode should be rejected for string input");
   } catch (const std::runtime_error &e) {
@@ -71,7 +62,7 @@ TEST_CASE("ClearResults removes expected output") {
       std::filesystem::temp_directory_path() / "datadriven-cpp-clear";
   std::filesystem::create_directories(dir);
   const auto work = dir / "case";
-  WriteFile(work, "cmd\ninput\n----\nold\n");
+  datadriven::test::WriteFile(work, "cmd\ninput\n----\nold\n");
   datadriven::ClearResults(work.string());
   REQUIRE(ReadFile(work) == "cmd\ninput\n----\n");
 }
