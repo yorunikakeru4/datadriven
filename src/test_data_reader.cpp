@@ -4,6 +4,7 @@
 #include <string_view>
 #include <utility>
 
+#include <datadriven/datadriven.hpp>
 #include <datadriven/internal/string_util.hpp>
 
 namespace datadriven::internal {

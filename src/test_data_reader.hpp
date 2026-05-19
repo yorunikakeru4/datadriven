@@ -1,6 +1,6 @@
 #pragma once
 
-#include <datadriven/datadriven.hpp>
+#include <datadriven/internal/types.hpp>
 #include <istream>
 #include <ostream>
 #include <sstream>
