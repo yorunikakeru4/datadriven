@@ -39,7 +39,8 @@ TEST_CASE("ParseLine parses empty and arguments") {
 }
 
 TEST_CASE("ParseLine parses list args and nested parens") {
-  auto [cmd, args] = datadriven::ParseLine("cmd exprs=(a + (b + c), d + f) flag x=");
+  auto [cmd, args] =
+      datadriven::ParseLine("cmd exprs=(a + (b + c), d + f) flag x=");
   REQUIRE(cmd == "cmd");
   REQUIRE(args.size() == 3);
   REQUIRE(args[0].key == "exprs");
@@ -54,7 +55,8 @@ TEST_CASE("ParseLine reports malformed input with column") {
   try {
     (void)datadriven::ParseLine("xx =");
     FAIL("ParseLine accepted malformed directive");
-  } catch (const std::runtime_error& e) {
-    REQUIRE(std::string(e.what()) == "cannot parse directive at column 4: xx =");
+  } catch (const std::runtime_error &e) {
+    REQUIRE(std::string(e.what()) ==
+            "cannot parse directive at column 4: xx =");
   }
 }

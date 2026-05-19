@@ -1,10 +1,8 @@
-#include <datadriven/datadriven.hpp>
-
+#include "string_util.hpp"
 #include <cctype>
+#include <datadriven/datadriven.hpp>
 #include <stdexcept>
 #include <string>
-
-#include "string_util.hpp"
 
 namespace datadriven {
 namespace {
@@ -17,42 +15,45 @@ std::size_t FindAny(std::string_view s, std::string_view chars) {
   return idx;
 }
 
-void TrimLineStart(std::string_view& line) {
+void TrimLineStart(std::string_view &line) {
   while (!line.empty() &&
          std::isspace(static_cast<unsigned char>(line.front())) != 0) {
     line.remove_prefix(1);
   }
 }
 
-[[noreturn]] void ParseError(const std::string& original, std::string_view rest) {
+[[noreturn]] void ParseError(const std::string &original,
+                             std::string_view rest) {
   const auto column = original.size() - rest.size() + 1;
-  throw std::runtime_error("cannot parse directive at column " + std::to_string(column) +
-                           ": " + std::string(original));
+  throw std::runtime_error("cannot parse directive at column " +
+                           std::to_string(column) + ": " +
+                           std::string(original));
 }
 
-std::string ConsumeUntil(std::string_view& line, std::string_view chars) {
+std::string ConsumeUntil(std::string_view &line, std::string_view chars) {
   const auto idx = FindAny(line, chars);
   std::string result(line.substr(0, idx));
   line.remove_prefix(idx);
   return result;
 }
 
-void ConsumeListValue(const std::string& original, std::string_view& line, CmdArg& arg) {
-  std::size_t pos = 1;
+void ConsumeListValue(const std::string &original, std::string_view &line,
+                      CmdArg &arg) {
   int nest = 1;
-  std::size_t last = pos;
+  line.remove_prefix(1);
+  std::string_view value = line;
   while (nest > 0) {
-    if (pos == line.size()) {
+    if (line.empty()) {
       ParseError(original, line);
     }
-    const char ch = line[pos++];
+    const char ch = line.front();
+    line.remove_prefix(1);
     if (ch == ',' && nest == 1) {
-      arg.vals.emplace_back(line.substr(last, pos - last - 1));
-      while (pos < line.size() &&
-             std::isspace(static_cast<unsigned char>(line[pos])) != 0) {
-        ++pos;
-      }
-      last = pos;
+      const auto value_size =
+          static_cast<std::size_t>((line.data() - value.data()) - 1);
+      arg.vals.emplace_back(value.substr(0, value_size));
+      TrimLineStart(line);
+      value = line;
       continue;
     }
     if (ch == '(') {
@@ -63,16 +64,16 @@ void ConsumeListValue(const std::string& original, std::string_view& line, CmdAr
       --nest;
     }
   }
-  arg.vals.emplace_back(line.substr(last, pos - last - 1));
-  line.remove_prefix(pos);
+  const auto value_size =
+      static_cast<std::size_t>((line.data() - value.data()) - 1);
+  arg.vals.emplace_back(value.substr(0, value_size));
 }
 
-}  // namespace
+} // namespace
 
 std::pair<std::string, std::vector<CmdArg>> ParseLine(std::string_view input) {
   const std::string original_owned = internal::TrimSpace(input);
-  std::string owned = original_owned;
-  std::string_view line(owned);
+  std::string_view line(original_owned);
   if (line.empty()) {
     return {"", {}};
   }
@@ -93,7 +94,8 @@ std::pair<std::string, std::vector<CmdArg>> ParseLine(std::string_view input) {
 
     if (!line.empty() && line.front() == '=') {
       line.remove_prefix(1);
-      if (line.empty() || std::isspace(static_cast<unsigned char>(line.front())) != 0) {
+      if (line.empty() ||
+          std::isspace(static_cast<unsigned char>(line.front())) != 0) {
         arg.vals.push_back("");
       } else if (line.front() != '(') {
         arg.vals.push_back(ConsumeUntil(line, " \t"));
@@ -109,4 +111,4 @@ std::pair<std::string, std::vector<CmdArg>> ParseLine(std::string_view input) {
   return {cmd, args};
 }
 
-}  // namespace datadriven
+} // namespace datadriven

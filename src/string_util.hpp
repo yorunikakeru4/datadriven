@@ -1,11 +1,9 @@
 #pragma once
 
-#include <algorithm>
 #include <cctype>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace datadriven::internal {
 
@@ -26,26 +24,11 @@ inline bool StartsWith(std::string_view s, std::string_view prefix) {
 }
 
 inline bool EndsWith(std::string_view s, std::string_view suffix) {
-  return s.size() >= suffix.size() && s.substr(s.size() - suffix.size()) == suffix;
+  return s.size() >= suffix.size() &&
+         s.substr(s.size() - suffix.size()) == suffix;
 }
 
-inline std::vector<std::string> SplitLinesKeepEnd(std::string_view s) {
-  std::vector<std::string> lines;
-  std::string current;
-  for (char ch : s) {
-    current.push_back(ch);
-    if (ch == '\n') {
-      lines.push_back(current);
-      current.clear();
-    }
-  }
-  if (!current.empty()) {
-    lines.push_back(current);
-  }
-  return lines;
-}
-
-inline bool HasBlankLine(std::string_view s) {
+inline bool HasWhitespaceOnlyLine(std::string_view s) {
   bool at_line_start = true;
   bool only_space = true;
   for (char ch : s) {
@@ -81,4 +64,4 @@ inline std::string IndentLines(std::string_view s) {
   return out.str();
 }
 
-}  // namespace datadriven::internal
+} // namespace datadriven::internal

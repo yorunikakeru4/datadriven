@@ -1,2 +1,4 @@
 docs/
-buid/
+build/
+.copilot/
+.cache
