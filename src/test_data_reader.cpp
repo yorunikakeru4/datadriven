@@ -55,6 +55,9 @@ std::optional<TestData> TestDataReader::Next() {
       line += " ";
       line += TrimSpace(next);
     }
+    if (line.ends_with("\\")) {
+      line.pop_back();
+    }
 
     auto [cmd, args] = ParseLine(line);
     if (cmd.empty()) {

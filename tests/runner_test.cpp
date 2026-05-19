@@ -108,6 +108,22 @@ read
       });
 }
 
+TEST_CASE("RetryFor does not stabilize on whitespace-padded output while "
+          "awaiting correct value") {
+  // Bug: TrimSpace("  foo  ") == TrimSpace("foo\n") so RetryFor exits after
+  // 3 padded results and returns "  foo  " instead of waiting for "foo\n".
+  datadriven::TestData d;
+  d.expected = "foo\n";
+  int call_count = 0;
+  const auto result = d.RetryFor(std::chrono::milliseconds(500), [&] {
+    ++call_count;
+    if (call_count <= 3)
+      return std::string("  foo  ");
+    return std::string("foo\n");
+  });
+  REQUIRE(result == "foo\n");
+}
+
 TEST_CASE("RetryFor keeps the timeout budget") {
   datadriven::TestData d;
   d.expected = "expected";

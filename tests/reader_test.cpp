@@ -59,3 +59,24 @@ TEST_CASE("TestDataReader skips comments and joins directive continuations") {
   REQUIRE(td->cmd == "cmd");
   REQUIRE(td->cmd_args[0].ToString() == "a=b");
 }
+
+TEST_CASE("TestDataReader strips trailing continuation backslash at EOF") {
+  // Directive line ending with '\' but no following line: the '\' must be
+  // dropped, not surfaced as a spurious argument key.
+  std::istringstream input("cmd \\\n");
+  datadriven::internal::TestDataReader reader("<string>", input, false);
+  auto td = reader.Next();
+  REQUIRE(td.has_value());
+  REQUIRE(td->cmd == "cmd");
+  REQUIRE(td->cmd_args.empty());
+}
+
+TEST_CASE("TestDataReader strips trailing continuation backslash with no "
+          "newline at EOF") {
+  std::istringstream input("cmd \\");
+  datadriven::internal::TestDataReader reader("<string>", input, false);
+  auto td = reader.Next();
+  REQUIRE(td.has_value());
+  REQUIRE(td->cmd == "cmd");
+  REQUIRE(td->cmd_args.empty());
+}

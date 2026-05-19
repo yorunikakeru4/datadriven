@@ -1,4 +1,5 @@
 #include <datadriven/datadriven.hpp>
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -175,7 +176,7 @@ std::string RunTestInternal(std::string_view source_name, std::istream &input,
   }
 
   std::string rewrite = reader.RewriteOutput();
-  if (rewrite.size() > 2 && rewrite[rewrite.size() - 1] == '\n' &&
+  if (rewrite.size() >= 2 && rewrite[rewrite.size() - 1] == '\n' &&
       rewrite[rewrite.size() - 2] == '\n') {
     rewrite.pop_back();
   }
