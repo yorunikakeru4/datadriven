@@ -4,8 +4,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <system_error>
+#include <unistd.h>
 
-#include "string_util.hpp"
+#include <datadriven/internal/string_util.hpp>
 #include "test_data_reader.hpp"
 
 namespace datadriven {
@@ -101,7 +102,7 @@ std::string UnifiedFailure(const TestData &d, std::string_view actual) {
 }
 
 void EmitLines(internal::TestDataReader &reader, std::string_view text) {
-  std::stringstream lines{std::string(text)};
+  std::istringstream lines{std::string(text)};
   std::string line;
   while (std::getline(lines, line)) {
     reader.Emit(line);
@@ -181,12 +182,11 @@ std::string RunTestInternal(std::string_view source_name, std::istream &input,
   return rewrite;
 }
 
-std::filesystem::path RewriteTempPath(const std::filesystem::path &path,
-                                      int attempt) {
+std::filesystem::path RewriteTempPath(const std::filesystem::path &path) {
   const std::filesystem::path parent =
       path.parent_path().empty() ? "." : path.parent_path();
-  return parent /
-         (path.filename().string() + ".rewrite.tmp." + std::to_string(attempt));
+  return parent / (path.filename().string() + ".rewrite." +
+                   std::to_string(static_cast<long>(::getpid())) + ".tmp");
 }
 
 void WriteFileAtomically(std::string_view path_text,
@@ -199,23 +199,7 @@ void WriteFileAtomically(std::string_view path_text,
                              ec.message());
   }
 
-  std::filesystem::path temp;
-  bool found_temp = false;
-  for (int i = 0; i < 100; ++i) {
-    temp = RewriteTempPath(path, i);
-    if (!std::filesystem::exists(temp, ec)) {
-      found_temp = true;
-      break;
-    }
-    if (ec) {
-      throw std::runtime_error("failed to inspect " + temp.string() + ": " +
-                               ec.message());
-    }
-  }
-  if (!found_temp) {
-    throw std::runtime_error("failed to choose temporary rewrite path for " +
-                             path.string());
-  }
+  const auto temp = RewriteTempPath(path);
 
   try {
     std::ofstream out(temp, std::ios::trunc);
@@ -275,7 +259,7 @@ void RunTest(std::string_view path, Handler handler, Options options) {
 
 void ClearResults(std::string_view path) {
   RunTest(
-      path, [](const TestData &) { return std::string(""); },
+      path, [](const TestData &) { return std::string{}; },
       Options{.rewrite = true});
 }
 

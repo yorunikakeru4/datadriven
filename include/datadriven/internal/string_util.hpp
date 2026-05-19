@@ -8,15 +8,6 @@
 
 namespace datadriven::internal {
 
-inline bool StartsWith(std::string_view s, std::string_view prefix) {
-  return s.substr(0, prefix.size()) == prefix;
-}
-
-inline bool EndsWith(std::string_view s, std::string_view suffix) {
-  return s.size() >= suffix.size() &&
-         s.substr(s.size() - suffix.size()) == suffix;
-}
-
 inline bool HasWhitespaceOnlyLine(std::string_view s) {
   bool at_line_start = true;
   bool only_space = true;

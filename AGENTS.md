@@ -136,6 +136,7 @@ return entries;
 - Use `.hpp` for headers and `.cpp` for implementation files.
 - Do not introduce external dependencies beyond those already planned unless there is a clear need and the user agrees.
 - Use Conventional Commits for commit messages, for example `feat: add directive parser`.
+- After any changes use just format
 
 ## Tests
 
@@ -159,3 +160,4 @@ return entries;
 ## Changelog
 
 - No changelog is required until the project has a user-facing release process.
+-

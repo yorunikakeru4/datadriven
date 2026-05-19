@@ -31,29 +31,46 @@ bool IsTempFile(std::string_view name) {
 
 void Walk(std::string_view path_view,
           const std::function<void(std::string_view)> &fn) {
-  std::filesystem::path path(path_view);
-  if (!std::filesystem::exists(path)) {
-    throw std::runtime_error("path does not exist: " + path.string());
+  std::filesystem::path root(path_view);
+  if (!std::filesystem::exists(root)) {
+    throw std::runtime_error("path does not exist: " + root.string());
   }
-  if (!std::filesystem::is_directory(path)) {
-    const auto s = path.string();
-    fn(s);
+  if (!std::filesystem::is_directory(root)) {
+    fn(root.string());
     return;
   }
 
-  std::vector<WalkEntry> entries;
-  for (const auto &entry : std::filesystem::directory_iterator(path)) {
-    auto name = entry.path().filename().string();
-    if (!IsTempFile(name)) {
-      entries.push_back({entry, std::move(name)});
-    }
-  }
-  std::sort(entries.begin(), entries.end(),
-            [](const auto &a, const auto &b) { return a.name < b.name; });
+  // Iterative DFS; reverse-insert sorted entries so the first lexical entry is
+  // popped first from the LIFO stack.
+  std::vector<std::filesystem::path> work = {root};
+  while (!work.empty()) {
+    std::filesystem::path current = std::move(work.back());
+    work.pop_back();
 
-  for (const auto &entry : entries) {
-    const auto child = entry.entry.path().string();
-    Walk(child, fn);
+    if (!std::filesystem::is_directory(current)) {
+      fn(current.string());
+      continue;
+    }
+
+    std::vector<WalkEntry> entries;
+    try {
+      for (const auto &entry : std::filesystem::directory_iterator(current)) {
+        auto name = entry.path().filename().string();
+        if (!IsTempFile(name)) {
+          entries.push_back({entry, std::move(name)});
+        }
+      }
+    } catch (const std::filesystem::filesystem_error &e) {
+      throw std::runtime_error("failed to read directory " + current.string() +
+                               ": " + e.what());
+    }
+
+    std::sort(entries.begin(), entries.end(),
+              [](const auto &a, const auto &b) { return a.name < b.name; });
+
+    for (auto it = entries.rbegin(); it != entries.rend(); ++it) {
+      work.push_back(it->entry.path());
+    }
   }
 }
 

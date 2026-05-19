@@ -139,6 +139,8 @@ void Walk(std::string_view path,
 // and throws std::runtime_error on parse or filesystem errors.
 void ClearResults(std::string_view path);
 
+// Internal implementation details required by header-defined template
+// functions. Not part of the public API; names and types may change.
 namespace internal {
 
 template <class T> struct IsVector : std::false_type {};

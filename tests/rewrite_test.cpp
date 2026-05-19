@@ -10,18 +10,24 @@ namespace {
 
 std::string ReadFile(const std::filesystem::path &path) {
   std::ifstream in(path);
+  if (!in) {
+    throw std::runtime_error("failed to open for reading: " + path.string());
+  }
   std::ostringstream out;
   out << in.rdbuf();
   return out.str();
 }
 
 std::string RewriteHandler(const datadriven::TestData &d) {
-  if (d.cmd == "noop")
+  if (d.cmd == "noop") {
     return d.input;
-  if (d.cmd == "duplicate")
+  }
+  if (d.cmd == "duplicate") {
     return d.input + "\n" + d.input;
-  if (d.cmd == "duplicate-with-blank")
+  }
+  if (d.cmd == "duplicate-with-blank") {
     return d.input + "\n\n" + d.input;
+  }
   throw std::runtime_error("unknown directive: " + d.cmd);
 }
 

@@ -13,8 +13,9 @@
 namespace {
 
 std::string RenderVector(const std::vector<std::string> &vals) {
-  if (vals.empty())
+  if (vals.empty()) {
     return "{}";
+  }
   std::ostringstream out;
   out << "{";
   for (std::size_t i = 0; i < vals.size(); ++i) {
@@ -45,11 +46,13 @@ TEST_CASE("RunTest handles directive example") {
 TEST_CASE("RunTest handles multiline example") {
   datadriven::RunTest(datadriven::test::TestDataPath("multiline").string(),
                       [](const datadriven::TestData &d) {
-                        if (d.cmd == "small")
+                        if (d.cmd == "small") {
                           return std::string("just\ntwo lines of output");
-                        if (d.cmd == "large")
+                        }
+                        if (d.cmd == "large") {
                           return std::string(
                               "more\nthan\nfive\nlines\nof\noutput");
+                        }
                         throw std::runtime_error("unknown directive: " + d.cmd);
                       });
 }
@@ -113,5 +116,5 @@ TEST_CASE("RetryFor keeps the timeout budget") {
   const auto result = d.RetryFor(timeout, [] { return std::string("actual"); });
   const auto elapsed = std::chrono::steady_clock::now() - start;
   REQUIRE(result == "actual");
-  CHECK(elapsed < std::chrono::milliseconds(250));
+  CHECK(elapsed < std::chrono::milliseconds(200));
 }

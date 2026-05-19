@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 
-#include "string_util.hpp"
+#include <datadriven/internal/string_util.hpp>
 
 namespace datadriven::internal {
 namespace {
@@ -44,11 +44,11 @@ std::optional<TestData> TestDataReader::Next() {
     data.pos = source_name_ + ":" + std::to_string(scanner_.Line());
 
     line = TrimSpace(line);
-    if (line.empty() || StartsWith(line, "#")) {
+    if (line.empty() || line.starts_with("#")) {
       continue;
     }
 
-    while (EndsWith(line, "\\") && scanner_.Scan()) {
+    while (line.ends_with("\\") && scanner_.Scan()) {
       std::string next = scanner_.Text();
       Emit(next);
       line.pop_back();

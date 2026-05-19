@@ -17,6 +17,7 @@ inline void WriteFile(const std::filesystem::path &path,
   if (!out) {
     throw std::runtime_error("failed to open for writing: " + path.string());
   }
+  out.exceptions(std::ios::badbit | std::ios::failbit);
   out << data;
 }
 
