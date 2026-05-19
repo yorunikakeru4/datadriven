@@ -78,7 +78,7 @@ TEST_CASE("RunTest handles retry example") {
               value.fetch_add(1);
             }));
           }
-          return std::string("");
+          return std::string{};
         }
         if (d.cmd == "read") {
           return d.Retry([&] { return std::to_string(value.load()); });

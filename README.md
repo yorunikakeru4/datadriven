@@ -34,3 +34,7 @@ or call:
 ```cpp
 datadriven::RunTest(path, handler, datadriven::Options{.rewrite = true});
 ```
+
+## Inspired By
+
+- [cockroachdb/datadriven](https://github.com/cockroachdb/datadriven) — original Go implementation

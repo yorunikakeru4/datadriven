@@ -45,7 +45,7 @@ inline bool HasWhitespaceOnlyLine(std::string_view s) {
       only_space = false;
     }
   }
-  return false;
+  return only_space && !at_line_start;
 }
 
 inline std::string IndentLines(std::string_view s) {

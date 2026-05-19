@@ -100,6 +100,10 @@ void TestDataReader::ReadExpected(TestData &data) {
     line = scanner_.Text();
     if (IsSeparator(line)) {
       allow_blank_lines = true;
+      if (!scanner_.Scan()) {
+        throw std::runtime_error("unterminated double ---- separator section");
+      }
+      line = scanner_.Text();
     }
   }
 
@@ -119,23 +123,28 @@ void TestDataReader::ParseBlock(bool allow_blank_lines, std::string &line,
 
 void TestDataReader::ParseBlockAllowingBlankLines(std::string &line,
                                                   std::ostream &out) {
-  while (scanner_.Scan()) {
-    line = scanner_.Text();
-
+  while (true) {
     if (!IsSeparator(line)) {
       out << line << '\n';
+      if (!scanner_.Scan()) {
+        break;
+      }
+      line = scanner_.Text();
       continue;
     }
 
     if (!scanner_.Scan()) {
       out << line << '\n';
-      continue;
+      break;
     }
 
     std::string line2 = scanner_.Text();
-
     if (!IsSeparator(line2)) {
       out << line << '\n' << line2 << '\n';
+      if (!scanner_.Scan()) {
+        break;
+      }
+      line = scanner_.Text();
       continue;
     }
 

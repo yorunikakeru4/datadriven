@@ -17,6 +17,9 @@ std::string ReadFile(const std::filesystem::path &path) {
 
 void WriteFile(const std::filesystem::path &path, std::string_view data) {
   std::ofstream out(path, std::ios::trunc);
+  if (!out) {
+    throw std::runtime_error("failed to open for writing: " + path.string());
+  }
   out << data;
 }
 
@@ -54,7 +57,7 @@ TEST_CASE("RunTestFromString rejects rewrite mode") {
   try {
     datadriven::RunTestFromString(
         "cmd\n----\nold\n",
-        [](const datadriven::TestData &) { return std::string("new"); },
+        [](const datadriven::TestData &) { return "new"; },
         datadriven::Options{.rewrite = true});
     FAIL("rewrite mode should be rejected for string input");
   } catch (const std::runtime_error &e) {

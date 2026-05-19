@@ -8,6 +8,9 @@ namespace {
 
 void WriteFile(const std::filesystem::path &path, std::string_view data) {
   std::ofstream out(path, std::ios::trunc);
+  if (!out) {
+    throw std::runtime_error("failed to open for writing: " + path.string());
+  }
   out << data;
 }
 
