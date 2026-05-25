@@ -44,6 +44,7 @@ if(PROJECT_IS_TOP_LEVEL)
   add_executable(
     datadriven_tests
     tests/parse_line_test.cpp
+    tests/platform_test.cpp
     tests/reader_test.cpp
     tests/runner_test.cpp
     tests/rewrite_test.cpp

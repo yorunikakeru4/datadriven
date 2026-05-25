@@ -5,9 +5,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <system_error>
-#include <unistd.h>
 
 #include "test_data_reader.hpp"
+#include <datadriven/internal/platform.hpp>
 #include <datadriven/internal/string_util.hpp>
 
 namespace datadriven {
@@ -186,8 +186,9 @@ std::string RunTestInternal(std::string_view source_name, std::istream &input,
 std::filesystem::path RewriteTempPath(const std::filesystem::path &path) {
   const std::filesystem::path parent =
       path.parent_path().empty() ? "." : path.parent_path();
-  return parent / (path.filename().string() + ".rewrite." +
-                   std::to_string(static_cast<long>(::getpid())) + ".tmp");
+  return parent /
+         (path.filename().string() + ".rewrite." +
+          std::to_string(static_cast<long>(DATADRIVEN_PROCESS_ID())) + ".tmp");
 }
 
 void WriteFileAtomically(std::string_view path_text,
