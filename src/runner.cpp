@@ -223,7 +223,7 @@ void WriteFileAtomically(std::string_view path_text,
     }
   }
 
-  std::filesystem::rename(temp, path, ec);
+  internal::ReplaceFile(temp, path, ec);
   if (ec) {
     std::filesystem::remove(temp, ec);
     throw std::runtime_error("failed to replace " + path.string() + ": " +
