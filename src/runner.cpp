@@ -209,7 +209,8 @@ void WriteFileAtomically(std::string_view path_text,
     out << contents;
     out.close();
   } catch (const std::ios_base::failure &e) {
-    std::filesystem::remove(temp, ec);
+    std::error_code cleanup_ec;
+    std::filesystem::remove(temp, cleanup_ec);
     throw std::runtime_error("failed to write " + temp.string() + ": " +
                              e.what());
   }
@@ -217,17 +218,21 @@ void WriteFileAtomically(std::string_view path_text,
   if (std::filesystem::is_regular_file(original_status)) {
     std::filesystem::permissions(temp, original_status.permissions(), ec);
     if (ec) {
-      std::filesystem::remove(temp, ec);
+      const auto perm_ec = ec;
+      std::error_code cleanup_ec;
+      std::filesystem::remove(temp, cleanup_ec);
       throw std::runtime_error("failed to set permissions on " + temp.string() +
-                               ": " + ec.message());
+                               ": " + perm_ec.message());
     }
   }
 
   internal::ReplaceFile(temp, path, ec);
   if (ec) {
-    std::filesystem::remove(temp, ec);
+    const auto replace_ec = ec;
+    std::error_code cleanup_ec;
+    std::filesystem::remove(temp, cleanup_ec);
     throw std::runtime_error("failed to replace " + path.string() + ": " +
-                             ec.message());
+                             replace_ec.message());
   }
 }
 
@@ -248,12 +253,14 @@ void RunTest(std::string_view path, Handler handler, Options options) {
         std::string(path) +
         " is a directory, not a file; consider using datadriven::Walk");
   }
-  std::ifstream file{std::string(path)};
-  if (!file) {
-    throw std::runtime_error("failed to open " + std::string(path));
+  std::string rewrite;
+  {
+    std::ifstream file{std::string(path)};
+    if (!file) {
+      throw std::runtime_error("failed to open " + std::string(path));
+    }
+    rewrite = RunTestInternal(path, file, std::move(handler), options);
   }
-  std::string rewrite =
-      RunTestInternal(path, file, std::move(handler), options);
   if (options.rewrite) {
     WriteFileAtomically(path, rewrite);
   }
