@@ -26,8 +26,8 @@ function(datadriven_enable_warnings target)
                       -Wpedantic> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
 endfunction()
 
-add_library(datadriven src/line_parser.cpp src/platform.cpp
-                       src/test_data_reader.cpp src/runner.cpp src/walk.cpp)
+add_library(datadriven src/line_parser.cpp src/test_data_reader.cpp
+                       src/runner.cpp src/walk.cpp)
 target_include_directories(
   datadriven
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
