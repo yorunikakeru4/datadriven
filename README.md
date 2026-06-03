@@ -219,6 +219,19 @@ if (d.cmd == "read") {
 }
 ```
 
+### Benchmarks
+
+Record timing stats alongside regular testdata:
+
+```
+bench_sort iters=5000 warmup=100 tolerance=15
+1 5 3 2 4
+----
+mean=142ns p50=138ns p95=187ns p99=201ns
+```
+
+On every run the library compares actual stats against the recorded values. When all metrics fall within `tolerance`% of the baseline, the test passes without touching the file. When timing drifts outside the band the test fails with a diff — you decide whether to update the baseline.
+
 ## Usage
 
 ### RunTest
@@ -280,6 +293,22 @@ Erase all expected blocks in a testdata file (useful when regenerating from scra
 ```cpp
 datadriven::ClearResults("tests/testdata/mytest");
 ```
+
+### BenchmarkFor
+
+Time arbitrary work inside a handler and return a stats line the runner can compare:
+
+```cpp
+datadriven::BenchmarkOptions opts;
+int tol_pct = 10;
+d.MaybeScanArg("iters",     opts.iterations);
+d.MaybeScanArg("warmup",    opts.warmup);
+d.MaybeScanArg("tolerance", tol_pct);
+opts.tolerance = tol_pct / 100.0;
+return d.BenchmarkFor(opts, [&] { sort_data(d.input); });
+```
+
+`BenchmarkFor` runs `opts.warmup` unmeasured calls to prime caches, then `opts.iterations` measured calls, and returns `mean=Xns p50=Xns p95=Xns p99=Xns` (auto-scaled to ns, us, or ms). Use `Options{.rewrite = true}` to record a new baseline when the workload changes.
 
 ## Rewrite Mode
 
