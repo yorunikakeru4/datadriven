@@ -167,6 +167,34 @@ template <class Fn> std::string TestData::Retry(Fn &&fn) const {
   return RetryFor(std::chrono::seconds(1), std::forward<Fn>(fn));
 }
 
+// BenchmarkFor times fn() in opts.iterations measured calls (preceded by
+// opts.warmup unmeasured calls). It returns a stats line of the form:
+//
+//   mean=142ns p50=138ns p95=187ns p99=201ns
+//
+// Values auto-scale to ns, us, or ms.
+//
+// Typical usage in a handler:
+//
+//   datadriven::BenchmarkOptions opts;
+//   d.MaybeScanArg("iters",     opts.iterations);
+//   d.MaybeScanArg("warmup",    opts.warmup);
+//   int tol_pct = 10;
+//   d.MaybeScanArg("tolerance", tol_pct);
+//   opts.tolerance = tol_pct / 100.0;
+//   return d.BenchmarkFor(opts, [&] { work_to_time(d.input); });
+//
+// Testdata directive format:
+//
+//   bench_sort iters=5000 warmup=100 tolerance=15
+//   some input
+//   ----
+//   mean=142ns p50=138ns p95=187ns p99=201ns
+//
+// When the recorded stats are within opts.tolerance of the actual run, the
+// test passes without updating the file. When they drift outside tolerance,
+// the test fails with a diff. Run with Options{.rewrite=true} to record a
+// new baseline.
 template <class Fn>
 std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
                                    Fn &&fn) const {
@@ -175,8 +203,7 @@ std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
                                 ": BenchmarkFor: iterations must be >= 1");
   }
   if (opts.warmup < 0) {
-    throw std::invalid_argument(pos +
-                                ": BenchmarkFor: warmup must be >= 0");
+    throw std::invalid_argument(pos + ": BenchmarkFor: warmup must be >= 0");
   }
   for (int i = 0; i < opts.warmup; ++i) {
     std::invoke(fn);
@@ -205,9 +232,10 @@ std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
     return actual;
   }
   const auto exp_stats = internal::ParseStats(exp);
-  if (exp_stats &&
-      internal::StatsWithinTolerance(*exp_stats, actual_stats, opts.tolerance)) {
-    return std::string(exp); // return exactly what was recorded — diff stays clean
+  if (exp_stats && internal::StatsWithinTolerance(*exp_stats, actual_stats,
+                                                  opts.tolerance)) {
+    return std::string(
+        exp); // return exactly what was recorded — diff stays clean
   }
   return actual;
 }

@@ -15,7 +15,8 @@ namespace {
 std::string FormatDuration(double ns) {
   std::ostringstream out;
   if (ns < 1000.0) {
-    out << static_cast<long>(ns) << "ns";  // floor, not round — keeps value below threshold
+    out << static_cast<long>(ns)
+        << "ns"; // floor, not round — keeps value below threshold
   } else if (ns < 1e6) {
     out << std::fixed << std::setprecision(2) << (ns / 1000.0) << "us";
   } else {
@@ -54,8 +55,8 @@ BenchmarkStats ComputeStats(std::vector<double> samples) {
   }
   std::sort(samples.begin(), samples.end());
   const std::size_t n = samples.size();
-  const double mean =
-      std::accumulate(samples.begin(), samples.end(), 0.0) / static_cast<double>(n);
+  const double mean = std::accumulate(samples.begin(), samples.end(), 0.0) /
+                      static_cast<double>(n);
   const double p50 = samples[((n - 1) * 50) / 100];
   const double p95 = samples[((n - 1) * 95) / 100];
   const double p99 = samples[((n - 1) * 99) / 100];
@@ -70,7 +71,8 @@ std::string FormatStats(const BenchmarkStats &s) {
 }
 
 std::optional<BenchmarkStats> ParseStats(std::string_view s) {
-  while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' '))
+  while (!s.empty() &&
+         (s.back() == '\n' || s.back() == '\r' || s.back() == ' '))
     s.remove_suffix(1);
 
   BenchmarkStats result{};
@@ -78,37 +80,51 @@ std::optional<BenchmarkStats> ParseStats(std::string_view s) {
 
   while (!s.empty()) {
     const auto sp = s.find(' ');
-    const std::string_view token = (sp == std::string_view::npos) ? s : s.substr(0, sp);
+    const std::string_view token =
+        (sp == std::string_view::npos) ? s : s.substr(0, sp);
     s = (sp == std::string_view::npos) ? std::string_view{} : s.substr(sp + 1);
 
     const auto eq = token.find('=');
-    if (eq == std::string_view::npos) return std::nullopt;
+    if (eq == std::string_view::npos)
+      return std::nullopt;
 
     const std::string_view key = token.substr(0, eq);
     const auto ns = ParseDurationNs(token.substr(eq + 1));
-    if (!ns) return std::nullopt;
+    if (!ns)
+      return std::nullopt;
 
-    if      (key == "mean") { result.mean_ns = *ns; got_mean = true; }
-    else if (key == "p50")  { result.p50_ns  = *ns; got_p50  = true; }
-    else if (key == "p95")  { result.p95_ns  = *ns; got_p95  = true; }
-    else if (key == "p99")  { result.p99_ns  = *ns; got_p99  = true; }
-    else return std::nullopt;
+    if (key == "mean") {
+      result.mean_ns = *ns;
+      got_mean = true;
+    } else if (key == "p50") {
+      result.p50_ns = *ns;
+      got_p50 = true;
+    } else if (key == "p95") {
+      result.p95_ns = *ns;
+      got_p95 = true;
+    } else if (key == "p99") {
+      result.p99_ns = *ns;
+      got_p99 = true;
+    } else
+      return std::nullopt;
   }
 
-  if (!got_mean || !got_p50 || !got_p95 || !got_p99) return std::nullopt;
+  if (!got_mean || !got_p50 || !got_p95 || !got_p99)
+    return std::nullopt;
   return result;
 }
 
-bool StatsWithinTolerance(const BenchmarkStats &expected, const BenchmarkStats &actual,
-                          double tolerance) {
+bool StatsWithinTolerance(const BenchmarkStats &expected,
+                          const BenchmarkStats &actual, double tolerance) {
   auto within = [tolerance](double exp, double act) {
-    if (exp == 0.0) return act == 0.0;
+    if (exp == 0.0)
+      return act == 0.0;
     return std::abs(act - exp) / exp <= tolerance;
   };
   return within(expected.mean_ns, actual.mean_ns) &&
-         within(expected.p50_ns,  actual.p50_ns)  &&
-         within(expected.p95_ns,  actual.p95_ns)  &&
-         within(expected.p99_ns,  actual.p99_ns);
+         within(expected.p50_ns, actual.p50_ns) &&
+         within(expected.p95_ns, actual.p95_ns) &&
+         within(expected.p99_ns, actual.p99_ns);
 }
 
 } // namespace datadriven::internal

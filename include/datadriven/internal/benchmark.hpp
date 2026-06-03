@@ -10,9 +10,9 @@ namespace datadriven::internal {
 // BenchmarkStats holds timing percentiles all in nanoseconds.
 struct BenchmarkStats {
   double mean_ns = 0.0;
-  double p50_ns  = 0.0;
-  double p95_ns  = 0.0;
-  double p99_ns  = 0.0;
+  double p50_ns = 0.0;
+  double p95_ns = 0.0;
+  double p99_ns = 0.0;
 };
 
 // ComputeStats sorts samples and derives mean, p50, p95, p99.

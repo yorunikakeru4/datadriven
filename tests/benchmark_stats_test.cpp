@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <datadriven/internal/benchmark.hpp>
 #include <cmath>
+#include <datadriven/internal/benchmark.hpp>
 
 using datadriven::internal::BenchmarkStats;
 using datadriven::internal::ComputeStats;
@@ -31,7 +31,8 @@ TEST_CASE("FormatStats formats mixed units") {
 TEST_CASE("ComputeStats computes mean and percentiles") {
   // 100 samples: values 1..100 ns
   std::vector<double> samples(100);
-  for (int i = 0; i < 100; ++i) samples[i] = static_cast<double>(i + 1);
+  for (int i = 0; i < 100; ++i)
+    samples[i] = static_cast<double>(i + 1);
   const auto s = ComputeStats(std::move(samples));
   REQUIRE(std::abs(s.mean_ns - 50.5) < 0.01);
   REQUIRE(s.p50_ns == 50.0);
@@ -53,9 +54,9 @@ TEST_CASE("ParseStats round-trips nanoseconds") {
   const auto parsed = ParseStats(FormatStats(orig));
   REQUIRE(parsed.has_value());
   REQUIRE(std::abs(parsed->mean_ns - orig.mean_ns) < 1.0);
-  REQUIRE(std::abs(parsed->p50_ns  - orig.p50_ns)  < 1.0);
-  REQUIRE(std::abs(parsed->p95_ns  - orig.p95_ns)  < 1.0);
-  REQUIRE(std::abs(parsed->p99_ns  - orig.p99_ns)  < 1.0);
+  REQUIRE(std::abs(parsed->p50_ns - orig.p50_ns) < 1.0);
+  REQUIRE(std::abs(parsed->p95_ns - orig.p95_ns) < 1.0);
+  REQUIRE(std::abs(parsed->p99_ns - orig.p99_ns) < 1.0);
 }
 
 TEST_CASE("ParseStats round-trips microseconds") {
@@ -63,9 +64,9 @@ TEST_CASE("ParseStats round-trips microseconds") {
   const auto parsed = ParseStats(FormatStats(orig));
   REQUIRE(parsed.has_value());
   REQUIRE(std::abs(parsed->mean_ns - orig.mean_ns) < 10.0);
-  REQUIRE(std::abs(parsed->p50_ns  - orig.p50_ns)  < 10.0);
-  REQUIRE(std::abs(parsed->p95_ns  - orig.p95_ns)  < 10.0);
-  REQUIRE(std::abs(parsed->p99_ns  - orig.p99_ns)  < 10.0);
+  REQUIRE(std::abs(parsed->p50_ns - orig.p50_ns) < 10.0);
+  REQUIRE(std::abs(parsed->p95_ns - orig.p95_ns) < 10.0);
+  REQUIRE(std::abs(parsed->p99_ns - orig.p99_ns) < 10.0);
 }
 
 TEST_CASE("ParseStats round-trips milliseconds") {
@@ -73,9 +74,9 @@ TEST_CASE("ParseStats round-trips milliseconds") {
   const auto parsed = ParseStats(FormatStats(orig));
   REQUIRE(parsed.has_value());
   REQUIRE(std::abs(parsed->mean_ns - orig.mean_ns) < 10000.0);
-  REQUIRE(std::abs(parsed->p50_ns  - orig.p50_ns)  < 10000.0);
-  REQUIRE(std::abs(parsed->p95_ns  - orig.p95_ns)  < 10000.0);
-  REQUIRE(std::abs(parsed->p99_ns  - orig.p99_ns)  < 10000.0);
+  REQUIRE(std::abs(parsed->p50_ns - orig.p50_ns) < 10000.0);
+  REQUIRE(std::abs(parsed->p95_ns - orig.p95_ns) < 10000.0);
+  REQUIRE(std::abs(parsed->p99_ns - orig.p99_ns) < 10000.0);
 }
 
 TEST_CASE("ParseStats tolerates trailing newline") {
@@ -86,16 +87,20 @@ TEST_CASE("ParseStats tolerates trailing newline") {
 
 TEST_CASE("ParseStats returns nullopt for malformed input") {
   REQUIRE_FALSE(ParseStats("garbage").has_value());
-  REQUIRE_FALSE(ParseStats("mean=142ns p50=138ns").has_value()); // missing p95/p99
-  REQUIRE_FALSE(ParseStats("mean=142XX p50=138ns p95=187ns p99=201ns").has_value());
-  REQUIRE_FALSE(ParseStats("mean=142ns foo=138ns p95=187ns p99=201ns").has_value());
+  REQUIRE_FALSE(
+      ParseStats("mean=142ns p50=138ns").has_value()); // missing p95/p99
+  REQUIRE_FALSE(
+      ParseStats("mean=142XX p50=138ns p95=187ns p99=201ns").has_value());
+  REQUIRE_FALSE(
+      ParseStats("mean=142ns foo=138ns p95=187ns p99=201ns").has_value());
 }
 
 TEST_CASE("StatsWithinTolerance passes when all metrics within 10%") {
   const BenchmarkStats expected{100.0, 100.0, 100.0, 100.0};
   const BenchmarkStats actual{105.0, 95.0, 109.0, 91.0};
   REQUIRE(StatsWithinTolerance(expected, actual, 0.10));
-  const BenchmarkStats at_lower_bound{100.0, 90.0, 100.0, 100.0}; // p50 exactly 10% below
+  const BenchmarkStats at_lower_bound{100.0, 90.0, 100.0,
+                                      100.0}; // p50 exactly 10% below
   REQUIRE(StatsWithinTolerance(expected, at_lower_bound, 0.10));
 }
 
