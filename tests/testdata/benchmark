@@ -1,10 +1,10 @@
-# no-op benchmark — tolerance=100 so any actual value passes.
+# no-op benchmark — tolerance=1000 (1000%) so any actual value passes on any hardware.
 # This exercises the within-tolerance path without relying on exact timing.
-bench_noop iters=50 warmup=0 tolerance=100
+bench_noop iters=50 warmup=0 tolerance=1000
 ----
 mean=100ns p50=100ns p95=100ns p99=100ns
 
 # iters and warmup defaults — only tolerance is explicit to keep it machine-independent.
-bench_defaults tolerance=100
+bench_defaults tolerance=1000
 ----
 mean=100ns p50=100ns p95=100ns p99=100ns
