@@ -16,7 +16,7 @@ struct BenchmarkStats {
 };
 
 // ComputeStats sorts samples and derives mean, p50, p95, p99.
-// samples must be non-empty; values are nanoseconds as doubles.
+// samples must be non-empty. Throws std::invalid_argument if empty.
 BenchmarkStats ComputeStats(std::vector<double> samples);
 
 // FormatStats serialises stats to "mean=Xns p50=Xns p95=Xns p99=Xns".

@@ -14,7 +14,7 @@ namespace {
 std::string FormatDuration(double ns) {
   std::ostringstream out;
   if (ns < 1000.0) {
-    out << static_cast<long>(std::round(ns)) << "ns";
+    out << static_cast<long>(ns) << "ns";  // floor, not round — keeps value below threshold
   } else if (ns < 1e6) {
     out << std::fixed << std::setprecision(2) << (ns / 1000.0) << "us";
   } else {
@@ -48,6 +48,9 @@ std::optional<double> ParseDurationNs(std::string_view s) {
 } // namespace
 
 BenchmarkStats ComputeStats(std::vector<double> samples) {
+  if (samples.empty()) {
+    throw std::invalid_argument("ComputeStats: samples must be non-empty");
+  }
   std::sort(samples.begin(), samples.end());
   const std::size_t n = samples.size();
   const double mean =
