@@ -170,6 +170,14 @@ template <class Fn> std::string TestData::Retry(Fn &&fn) const {
 template <class Fn>
 std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
                                    Fn &&fn) const {
+  if (opts.iterations <= 0) {
+    throw std::invalid_argument(pos +
+                                ": BenchmarkFor: iterations must be >= 1");
+  }
+  if (opts.warmup < 0) {
+    throw std::invalid_argument(pos +
+                                ": BenchmarkFor: warmup must be >= 0");
+  }
   for (int i = 0; i < opts.warmup; ++i) {
     std::invoke(fn);
   }

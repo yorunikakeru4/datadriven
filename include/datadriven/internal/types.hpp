@@ -123,6 +123,8 @@ struct TestData {
   // so the test passes without churn from normal timing variance. When any
   // metric falls outside tolerance it returns the actual stats, failing the
   // comparison with a diff showing what changed.
+  //
+  // Throws std::invalid_argument when opts.iterations < 1 or opts.warmup < 0.
   template <class Fn>
   std::string BenchmarkFor(const BenchmarkOptions &opts, Fn &&fn) const;
 };
