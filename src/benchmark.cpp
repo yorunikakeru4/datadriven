@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <iomanip>
 #include <numeric>
 #include <sstream>
-#include <iomanip>
+#include <stdexcept>
 
 namespace datadriven::internal {
 
