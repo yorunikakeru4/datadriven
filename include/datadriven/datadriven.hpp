@@ -193,8 +193,8 @@ template <class Fn> std::string TestData::Retry(Fn &&fn) const {
 //
 // When the recorded stats are within opts.tolerance of the actual run, the
 // test passes without updating the file. When they drift outside tolerance,
-// the test fails with a diff. Run with Options{.rewrite=true} to record a
-// new baseline.
+// RunTest fails with a mismatch showing the actual vs recorded stats. Run
+// with Options{.rewrite=true} to record a new baseline.
 template <class Fn>
 std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
                                    Fn &&fn) const {
