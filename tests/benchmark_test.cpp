@@ -52,6 +52,23 @@ TEST_CASE("BenchmarkFor outside-tolerance path returns actual text") {
   // Should be a valid stats string.
   const auto parsed = datadriven::internal::ParseStats(result);
   REQUIRE(parsed.has_value());
+  REQUIRE(parsed->mean_ns < 1e8); // no-op must run faster than 100ms
+}
+
+TEST_CASE("BenchmarkFor tolerance=0 always takes outside-tolerance path") {
+  datadriven::TestData d;
+  d.expected = "mean=999ns p50=999ns p95=999ns p99=999ns\n";
+  d.rewrite  = false;
+
+  datadriven::BenchmarkOptions opts;
+  opts.iterations = 10;
+  opts.tolerance  = 0.0; // exact match required — no-op timing is never exactly 999ns
+
+  const std::string result = d.BenchmarkFor(opts, [] {});
+  // outside-tolerance path fires → returns actual stats, not the stale expected
+  REQUIRE(result != "mean=999ns p50=999ns p95=999ns p99=999ns");
+  const auto parsed = datadriven::internal::ParseStats(result);
+  REQUIRE(parsed.has_value());
 }
 
 TEST_CASE("BenchmarkFor rewrite=true returns actual stats") {
@@ -82,7 +99,7 @@ TEST_CASE("BenchmarkFor empty expected returns actual stats") {
   REQUIRE(parsed.has_value());
 }
 
-TEST_CASE("BenchmarkFor warmup does not count toward stats") {
+TEST_CASE("BenchmarkFor does not crash with warmup iterations") {
   // Not a timing assertion — just verifies warmup calls don't crash.
   datadriven::TestData d;
   d.expected = "";
