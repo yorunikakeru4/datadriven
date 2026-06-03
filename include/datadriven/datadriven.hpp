@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include <datadriven/internal/benchmark.hpp>
 #include <datadriven/internal/types.hpp>
 
 namespace datadriven {
@@ -164,6 +165,43 @@ std::string TestData::RetryFor(std::chrono::milliseconds timeout,
 
 template <class Fn> std::string TestData::Retry(Fn &&fn) const {
   return RetryFor(std::chrono::seconds(1), std::forward<Fn>(fn));
+}
+
+template <class Fn>
+std::string TestData::BenchmarkFor(const BenchmarkOptions &opts,
+                                   Fn &&fn) const {
+  for (int i = 0; i < opts.warmup; ++i) {
+    std::invoke(fn);
+  }
+  std::vector<double> samples(static_cast<std::size_t>(opts.iterations));
+  for (int i = 0; i < opts.iterations; ++i) {
+    const auto t0 = std::chrono::steady_clock::now();
+    std::invoke(fn);
+    const auto t1 = std::chrono::steady_clock::now();
+    samples[static_cast<std::size_t>(i)] =
+        std::chrono::duration<double, std::nano>(t1 - t0).count();
+  }
+  const internal::BenchmarkStats actual_stats =
+      internal::ComputeStats(std::move(samples));
+  const std::string actual = internal::FormatStats(actual_stats);
+
+  if (rewrite) {
+    return actual;
+  }
+  // Strip trailing newline from expected before parsing.
+  std::string_view exp = expected;
+  while (!exp.empty() && (exp.back() == '\n' || exp.back() == '\r'))
+    exp.remove_suffix(1);
+
+  if (exp.empty()) {
+    return actual;
+  }
+  const auto exp_stats = internal::ParseStats(exp);
+  if (exp_stats &&
+      internal::StatsWithinTolerance(*exp_stats, actual_stats, opts.tolerance)) {
+    return std::string(exp); // return exactly what was recorded — diff stays clean
+  }
+  return actual;
 }
 
 } // namespace datadriven

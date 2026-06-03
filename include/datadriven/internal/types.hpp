@@ -18,6 +18,18 @@ struct Options {
   bool rewrite = false;
 };
 
+// BenchmarkOptions controls BenchmarkFor behaviour.
+struct BenchmarkOptions {
+  // iterations is the number of measured calls to fn. Must be >= 1.
+  int iterations = 1000;
+  // warmup is the number of calls before measurement begins.
+  // Use to prime caches and branch predictor for short hot-path benchmarks.
+  int warmup = 0;
+  // tolerance is the maximum relative deviation from the recorded expected
+  // stats before a benchmark fails (0.10 = ±10%).
+  double tolerance = 0.10;
+};
+
 // CmdArg is one directive argument, optionally with one or more values.
 struct CmdArg {
   // key is the argument name exactly as parsed from the directive line.
@@ -100,6 +112,19 @@ struct TestData {
   std::string RetryFor(std::chrono::milliseconds timeout, Fn &&fn) const;
   // Retry calls RetryFor with the default one-second timeout.
   template <class Fn> std::string Retry(Fn &&fn) const;
+
+  // BenchmarkFor runs fn() opts.warmup times (unmeasured) then opts.iterations
+  // times (measured). It computes mean, p50, p95, p99 nanosecond stats and
+  // returns a formatted stats line.
+  //
+  // When rewrite is true or expected is empty, it returns the actual stats.
+  // Otherwise it parses expected, compares each metric within opts.tolerance,
+  // and returns the expected text unchanged when all metrics are in range —
+  // so the test passes without churn from normal timing variance. When any
+  // metric falls outside tolerance it returns the actual stats, failing the
+  // comparison with a diff showing what changed.
+  template <class Fn>
+  std::string BenchmarkFor(const BenchmarkOptions &opts, Fn &&fn) const;
 };
 
 } // namespace datadriven
