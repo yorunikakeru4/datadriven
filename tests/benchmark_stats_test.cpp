@@ -63,6 +63,9 @@ TEST_CASE("ParseStats round-trips microseconds") {
   const auto parsed = ParseStats(FormatStats(orig));
   REQUIRE(parsed.has_value());
   REQUIRE(std::abs(parsed->mean_ns - orig.mean_ns) < 10.0);
+  REQUIRE(std::abs(parsed->p50_ns  - orig.p50_ns)  < 10.0);
+  REQUIRE(std::abs(parsed->p95_ns  - orig.p95_ns)  < 10.0);
+  REQUIRE(std::abs(parsed->p99_ns  - orig.p99_ns)  < 10.0);
 }
 
 TEST_CASE("ParseStats round-trips milliseconds") {
@@ -70,6 +73,9 @@ TEST_CASE("ParseStats round-trips milliseconds") {
   const auto parsed = ParseStats(FormatStats(orig));
   REQUIRE(parsed.has_value());
   REQUIRE(std::abs(parsed->mean_ns - orig.mean_ns) < 10000.0);
+  REQUIRE(std::abs(parsed->p50_ns  - orig.p50_ns)  < 10000.0);
+  REQUIRE(std::abs(parsed->p95_ns  - orig.p95_ns)  < 10000.0);
+  REQUIRE(std::abs(parsed->p99_ns  - orig.p99_ns)  < 10000.0);
 }
 
 TEST_CASE("ParseStats tolerates trailing newline") {
@@ -82,12 +88,15 @@ TEST_CASE("ParseStats returns nullopt for malformed input") {
   REQUIRE_FALSE(ParseStats("garbage").has_value());
   REQUIRE_FALSE(ParseStats("mean=142ns p50=138ns").has_value()); // missing p95/p99
   REQUIRE_FALSE(ParseStats("mean=142XX p50=138ns p95=187ns p99=201ns").has_value());
+  REQUIRE_FALSE(ParseStats("mean=142ns foo=138ns p95=187ns p99=201ns").has_value());
 }
 
 TEST_CASE("StatsWithinTolerance passes when all metrics within 10%") {
   const BenchmarkStats expected{100.0, 100.0, 100.0, 100.0};
   const BenchmarkStats actual{105.0, 95.0, 109.0, 91.0};
   REQUIRE(StatsWithinTolerance(expected, actual, 0.10));
+  const BenchmarkStats at_lower_bound{100.0, 90.0, 100.0, 100.0}; // p50 exactly 10% below
+  REQUIRE(StatsWithinTolerance(expected, at_lower_bound, 0.10));
 }
 
 TEST_CASE("StatsWithinTolerance fails when one metric exceeds tolerance") {
@@ -101,4 +110,8 @@ TEST_CASE("StatsWithinTolerance handles tolerance of 0") {
   REQUIRE(StatsWithinTolerance(expected, expected, 0.0));
   const BenchmarkStats actual{100.1, 100.0, 100.0, 100.0};
   REQUIRE_FALSE(StatsWithinTolerance(expected, actual, 0.0));
+}
+
+TEST_CASE("ComputeStats throws on empty input") {
+  REQUIRE_THROWS_AS(ComputeStats({}), std::invalid_argument);
 }
